@@ -176,11 +176,12 @@ export default function MapPage() {
 
   return (
     <div className="map-page">
-      <div className="search-box">
+      <div className="toolbar">
+        <div className="search-box">
         <NominatimSearch onSelect={handleNominatimSelect} />
       </div>
 
-      <div className="filters">
+        <div className="filters">
         <select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)}>
           <option value="">{t('map.filterAll')}</option>
           {Object.keys(CATEGORY_COLORS).map((cat) => (
@@ -201,6 +202,7 @@ export default function MapPage() {
           <input type="checkbox" checked={showNonWorking} onChange={(e) => setShowNonWorking(e.target.checked)} />
           {t('map.showNonWorking')}
         </label>
+      </div>
       </div>
 
       <div className="map-wrap">
