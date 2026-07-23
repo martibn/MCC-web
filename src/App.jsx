@@ -4,6 +4,7 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import MapPage from './pages/MapPage';
+import './styles.css';
 import './i18n';
 
 function Nav() {
@@ -31,9 +32,9 @@ function AppRoutes() {
   const { user } = useAuth();
   return (
     <Routes>
-      <Route path="/" element={<MapPage />} />
-      <Route path="/login" element={user ? <MapPage /> : <LoginPage />} />
-      <Route path="/register" element={user ? <MapPage /> : <RegisterPage />} />
+      <Route path="/" element={<main><MapPage /></main>} />
+      <Route path="/login" element={user ? <main><MapPage /></main> : <LoginPage />} />
+      <Route path="/register" element={user ? <main><MapPage /></main> : <RegisterPage />} />
     </Routes>
   );
 }

@@ -23,9 +23,9 @@ export default function LoginPage() {
   };
 
   return (
-    <div>
+    <div className="page">
       <h1>{t('auth.login')}</h1>
-      {error && <p>{error}</p>}
+      {error && <p className="error">{error}</p>}
       <form onSubmit={handleSubmit}>
         <div>
           <label>{t('auth.email')}</label>
@@ -37,7 +37,7 @@ export default function LoginPage() {
         </div>
         <button type="submit">{t('auth.login')}</button>
       </form>
-      <Link to="/register">{t('auth.noAccount')}</Link>
+      <div className="link"><Link to="/register">{t('auth.noAccount')}</Link></div>
     </div>
   );
 }
