@@ -175,7 +175,7 @@ export default function MapPage() {
   });
 
   return (
-    <div>
+    <div className="map-page">
       <div className="search-box">
         <NominatimSearch onSelect={handleNominatimSelect} />
       </div>
