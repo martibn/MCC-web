@@ -109,7 +109,7 @@ export default function MapPage() {
       if (cardTypeFilter) params.card_type = cardTypeFilter;
       if (worksFilter) params.works = worksFilter;
       const { data } = await api.get('/locations', { params });
-      setLocations(data);
+      setLocations(Array.isArray(data) ? data : []);
     } catch {
       setLocations([]);
     }
@@ -121,7 +121,7 @@ export default function MapPage() {
 
   const handleNominatimSelect = (result) => {
     setSearchResult(result);
-    setSelectedPosition({ lat: result.lat, lng: result.lng });
+    setSelectedPosition({ lat: parseFloat(result.lat), lng: parseFloat(result.lng) });
     setFormData((prev) => ({ ...prev, address: result.address }));
   };
 
@@ -166,7 +166,7 @@ export default function MapPage() {
     });
   };
 
-  const filteredLocations = locations.filter((loc) => {
+  const filteredLocations = (Array.isArray(locations) ? locations : []).filter((loc) => {
     if (!showNonWorking) {
       const hasWorking = loc.acceptances?.some((a) => a.works);
       if (!hasWorking) return false;
