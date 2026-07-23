@@ -176,11 +176,11 @@ export default function MapPage() {
 
   return (
     <div>
-      <div>
+      <div className="search-box">
         <NominatimSearch onSelect={handleNominatimSelect} />
       </div>
 
-      <div>
+      <div className="filters">
         <select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)}>
           <option value="">{t('map.filterAll')}</option>
           {Object.keys(CATEGORY_COLORS).map((cat) => (
@@ -203,7 +203,8 @@ export default function MapPage() {
         </label>
       </div>
 
-      <MapContainer center={[41.3874, 2.1686]} zoom={12} style={{ height: '500px', width: '100%' }}>
+      <div className="map-wrap">
+      <MapContainer center={[41.3874, 2.1686]} zoom={12} style={{ height: '100%', width: '100%' }}>
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -236,9 +237,10 @@ export default function MapPage() {
           </Marker>
         ))}
       </MapContainer>
+      </div>
 
       {selectedPosition && user && (
-        <form onSubmit={handleAddPoint}>
+        <form onSubmit={handleAddPoint} className="add-point-form">
           <h2>{t('map.addPointTitle')}</h2>
           <div>
             <label>{t('point.name')}</label>
@@ -280,8 +282,10 @@ export default function MapPage() {
               Flexoh
             </label>
           </div>
-          <button type="submit">{t('common.save')}</button>
-          <button type="button" onClick={() => setSelectedPosition(null)}>{t('common.cancel')}</button>
+          <div className="form-actions">
+            <button type="submit" className="btn-save">{t('common.save')}</button>
+            <button type="button" className="btn-cancel" onClick={() => setSelectedPosition(null)}>{t('common.cancel')}</button>
+          </div>
         </form>
       )}
     </div>

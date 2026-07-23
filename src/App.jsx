@@ -12,7 +12,8 @@ function Nav() {
   const { user, logout } = useAuth();
   return (
     <nav>
-      <Link to="/">{t('app.title')}</Link>
+      <Link to="/" className="logo">{t('app.title')}</Link>
+      <div className="spacer" />
       {user ? (
         <>
           <span>{user.name}</span>
@@ -32,9 +33,9 @@ function AppRoutes() {
   const { user } = useAuth();
   return (
     <Routes>
-      <Route path="/" element={<main><MapPage /></main>} />
-      <Route path="/login" element={user ? <main><MapPage /></main> : <LoginPage />} />
-      <Route path="/register" element={user ? <main><MapPage /></main> : <RegisterPage />} />
+      <Route path="/" element={<MapPage />} />
+      <Route path="/login" element={user ? <MapPage /> : <LoginPage />} />
+      <Route path="/register" element={user ? <MapPage /> : <RegisterPage />} />
     </Routes>
   );
 }
