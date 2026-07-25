@@ -120,6 +120,7 @@ export default function MapPage() {
   const { t } = useTranslation();
   const { user } = useAuth();
   const [locations, setLocations] = useState([]);
+  const [cardTypes, setCardTypes] = useState([]);
   const [categoryFilter, setCategoryFilter] = useState([]);
   const [cardTypeFilter, setCardTypeFilter] = useState('');
   const [showNonWorking, setShowNonWorking] = useState(false);
@@ -132,6 +133,10 @@ export default function MapPage() {
   const searchOverlayRef = useRef(null);
   const tempMarkerRef = useRef(null);
   const skipSearchRef = useRef(false);
+
+  useEffect(() => {
+    api.get('/card-types').then(({ data }) => setCardTypes(data)).catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (searchResults.length === 0) return;
@@ -260,8 +265,9 @@ export default function MapPage() {
         <div className="filters">
         <select value={cardTypeFilter} onChange={(e) => setCardTypeFilter(e.target.value)}>
           <option value="">{t('map.filterAll')}</option>
-          <option value="PAYFLOW">Payflow</option>
-          <option value="FLEXOH">Flexoh</option>
+          {cardTypes.map((ct) => (
+            <option key={ct.id} value={ct.name}>{ct.name}</option>
+          ))}
         </select>
         <label>
           <input type="checkbox" checked={showNonWorking} onChange={(e) => setShowNonWorking(e.target.checked)} />
@@ -307,7 +313,7 @@ export default function MapPage() {
                   <div className="popup-cards">
                     {loc.acceptances && loc.acceptances.length > 0 ? (
                       sortAcceptances(loc.acceptances).map((acc) => (
-                        <span key={acc.id} className={`card-badge ${acc.cardType === 'PAYFLOW' ? 'payflow' : 'flexoh'} ${acc.works ? 'works' : 'fails'}`}>
+                        <span key={acc.id} className={`card-badge card-${acc.cardType.toLowerCase()} ${acc.works ? 'works' : 'fails'}`}>
                           {acc.cardType} {acc.works ? '\u2713' : '\u2717'}
                         </span>
                       ))
@@ -397,14 +403,12 @@ export default function MapPage() {
           </div>
           <div>
             <p>{t('point.addAcceptance')}</p>
-            <label>
-              <input type="checkbox" checked={formData.acceptances.some((a) => a.cardType === 'PAYFLOW')} onChange={() => toggleAcceptance('PAYFLOW')} />
-              Payflow
-            </label>
-            <label>
-              <input type="checkbox" checked={formData.acceptances.some((a) => a.cardType === 'FLEXOH')} onChange={() => toggleAcceptance('FLEXOH')} />
-              Flexoh
-            </label>
+            {cardTypes.map((ct) => (
+              <label key={ct.id}>
+                <input type="checkbox" checked={formData.acceptances.some((a) => a.cardType === ct.name)} onChange={() => toggleAcceptance(ct.name)} />
+                {ct.name}
+              </label>
+            ))}
           </div>
           <div className="form-actions">
             <button type="submit" className="btn-save">{t('common.save')}</button>

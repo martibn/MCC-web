@@ -12,8 +12,9 @@ export function AuthProvider({ children }) {
     const name = localStorage.getItem('userName');
     const email = localStorage.getItem('userEmail');
     const id = localStorage.getItem('userId');
+    const role = localStorage.getItem('userRole');
     if (token && id) {
-      setUser({ id, name, email });
+      setUser({ id, name, email, role });
     }
     setLoading(false);
   }, []);
@@ -24,7 +25,8 @@ export function AuthProvider({ children }) {
     localStorage.setItem('userId', data.userId);
     localStorage.setItem('userName', data.name);
     localStorage.setItem('userEmail', data.email);
-    setUser({ id: data.userId, name: data.name, email: data.email });
+    localStorage.setItem('userRole', data.role || 'USER');
+    setUser({ id: data.userId, name: data.name, email: data.email, role: data.role || 'USER' });
   }, []);
 
   const login = useCallback(async (email, password) => {
@@ -51,6 +53,7 @@ export function AuthProvider({ children }) {
     localStorage.removeItem('userId');
     localStorage.removeItem('userName');
     localStorage.removeItem('userEmail');
+    localStorage.removeItem('userRole');
     setUser(null);
   }, []);
 
