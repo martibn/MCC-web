@@ -47,25 +47,22 @@ function LocationMarker({ onLocationSelect }) {
 
 function MapFlyTo({ target, onArrived }) {
   const map = useMap();
+  const onArrivedRef = useRef(onArrived);
+  onArrivedRef.current = onArrived;
+
   useEffect(() => {
     if (target) {
       map.flyTo([target.lat, target.lng], 17, { duration: 1.2 });
-      if (onArrived) setTimeout(() => onArrived(), 1300);
+      const timer = setTimeout(() => {
+        if (onArrivedRef.current) onArrivedRef.current();
+      }, 1300);
+      return () => clearTimeout(timer);
     }
-  }, [map, target, onArrived]);
+  }, [map, target]);
   return null;
 }
 
-function AutoOpenPopup({ markerRef }) {
-  useEffect(() => {
-    if (markerRef.current) {
-      setTimeout(() => markerRef.current.openPopup(), 100);
-    }
-  }, []);
-  return null;
-}
-
-function NominatimSearch({ query, setQuery, results, onSelectResult }) {
+function NominatimSearch({ query, setQuery, onSelectResult, skipNextSearch }) {
   const { t } = useTranslation();
   const timer = useRef(null);
 
@@ -86,10 +83,14 @@ function NominatimSearch({ query, setQuery, results, onSelectResult }) {
   }, [onSelectResult]);
 
   useEffect(() => {
+    if (skipNextSearch && skipNextSearch.current) {
+      skipNextSearch.current = false;
+      return;
+    }
     clearTimeout(timer.current);
     timer.current = setTimeout(() => search(query), 400);
     return () => clearTimeout(timer.current);
-  }, [query, search]);
+  }, [query, search, skipNextSearch]);
 
   return (
     <input
@@ -118,13 +119,14 @@ export default function MapPage() {
   const [cardTypeFilter, setCardTypeFilter] = useState('');
   const [showNonWorking, setShowNonWorking] = useState(false);
   const [selectedPosition, setSelectedPosition] = useState(null);
-  const [formData, setFormData] = useState({ name: '', address: '', category: 'RESTAURANT', acceptances: [] });
+  const [formData, setFormData] = useState({ name: '', address: '', categories: [], acceptances: [] });
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [flyTarget, setFlyTarget] = useState(null);
   const [tempMarker, setTempMarker] = useState(null);
   const searchOverlayRef = useRef(null);
   const tempMarkerRef = useRef(null);
+  const skipSearchRef = useRef(false);
 
   useEffect(() => {
     if (searchResults.length === 0) return;
@@ -160,8 +162,9 @@ export default function MapPage() {
     setFormData((prev) => ({ ...prev, address: result.display_name }));
     setFlyTarget({ lat, lng });
     setSearchResults([]);
+    skipSearchRef.current = true;
     setSearchQuery(result.display_name);
-    setTempMarker({ lat, lng, name: result.display_name.split(',')[0] });
+    setTempMarker({ lat, lng, name: result.display_name.split(',')[0], address: result.display_name });
   };
 
   const handleSearchSelect = (item) => {
@@ -188,7 +191,7 @@ export default function MapPage() {
         address: formData.address,
         lat: selectedPosition.lat,
         lng: selectedPosition.lng,
-        category: formData.category,
+        categories: formData.categories,
       });
       if (formData.acceptances.length > 0) {
         await Promise.all(
@@ -198,7 +201,7 @@ export default function MapPage() {
         );
       }
       setSelectedPosition(null);
-      setFormData({ name: '', address: '', category: 'RESTAURANT', acceptances: [] });
+      setFormData({ name: '', address: '', categories: [], acceptances: [] });
       setTempMarker(null);
       fetchLocations();
     } catch {
@@ -217,7 +220,8 @@ export default function MapPage() {
   };
 
   const filteredLocations = (Array.isArray(locations) ? locations : []).filter((loc) => {
-    if (categoryFilter.length > 0 && !categoryFilter.includes(loc.serviceCategory)) return false;
+    const locCats = loc.categories || [];
+    if (categoryFilter.length > 0 && !categoryFilter.some((c) => locCats.includes(c))) return false;
     if (cardTypeFilter) {
       const hasWorking = loc.acceptances?.some((a) => a.cardType === cardTypeFilter && a.works);
       if (!hasWorking) return false;
@@ -232,7 +236,7 @@ export default function MapPage() {
     <div className="map-page">
       <div className="toolbar">
         <div className="search-box">
-          <NominatimSearch query={searchQuery} setQuery={setSearchQuery} results={searchResults} onSelectResult={setSearchResults} />
+          <NominatimSearch query={searchQuery} setQuery={setSearchQuery} onSelectResult={setSearchResults} skipNextSearch={skipSearchRef} />
         </div>
 
         <div className="category-pills">
@@ -268,27 +272,38 @@ export default function MapPage() {
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
           <LocationMarker onLocationSelect={handleMapClick} />
-          <MapFlyTo target={flyTarget} />
-          {filteredLocations.map((loc) => (
+          <MapFlyTo target={flyTarget} onArrived={() => {
+            if (tempMarkerRef.current) {
+              tempMarkerRef.current.openPopup();
+            }
+          }} />
+          {filteredLocations.map((loc) => {
+            const cats = loc.categories || [];
+            const firstCat = cats[0] || 'OTHER';
+            return (
             <Marker
               key={loc.id}
               position={[loc.lat, loc.lng]}
-              icon={createIcon(CATEGORY_COLORS[loc.serviceCategory] || CATEGORY_COLORS.OTHER)}
+              icon={createIcon(CATEGORY_COLORS[firstCat] || CATEGORY_COLORS.OTHER)}
             >
               <Popup>
                 <div className="popup-card">
-                  <div className="popup-header" style={{ borderLeftColor: CATEGORY_COLORS[loc.serviceCategory] || CATEGORY_COLORS.OTHER }}>
+                  <div className="popup-header" style={{ borderLeftColor: CATEGORY_COLORS[firstCat] || CATEGORY_COLORS.OTHER }}>
                     <strong>{loc.name}</strong>
                   </div>
                   <p className="popup-dir">{loc.address}</p>
-                  <span className="popup-cat" style={{ background: CATEGORY_COLORS[loc.serviceCategory] || CATEGORY_COLORS.OTHER }}>
-                    {t(`category.${loc.serviceCategory}`)}
-                  </span>
+                  <div className="popup-cats">
+                    {cats.map((cat) => (
+                      <span key={cat} className="popup-cat" style={{ background: CATEGORY_COLORS[cat] || CATEGORY_COLORS.OTHER }}>
+                        {t(`category.${cat}`)}
+                      </span>
+                    ))}
+                  </div>
                   <div className="popup-cards">
                     {loc.acceptances && loc.acceptances.length > 0 ? (
                       sortAcceptances(loc.acceptances).map((acc) => (
                         <span key={acc.id} className={`card-badge ${acc.cardType === 'PAYFLOW' ? 'payflow' : 'flexoh'} ${acc.works ? 'works' : 'fails'}`}>
-                          {acc.cardType} {acc.works ? '✓' : '✗'}
+                          {acc.cardType} {acc.works ? '\u2713' : '\u2717'}
                         </span>
                       ))
                     ) : (
@@ -298,18 +313,18 @@ export default function MapPage() {
                 </div>
               </Popup>
             </Marker>
-          ))}
+            );
+          })}
           {tempMarker && (
             <Marker ref={tempMarkerRef} position={[tempMarker.lat, tempMarker.lng]} icon={createHighlightIcon()}>
-              <Popup autoPan={false}>
+              <Popup>
                 <div className="popup-card">
                   <div className="popup-header" style={{ borderLeftColor: '#e74c3c' }}>
                     <strong>{tempMarker.name}</strong>
                   </div>
-                  <p className="popup-dir">{t('point.searchResult')}</p>
+                  <p className="popup-dir">{tempMarker.address}</p>
                 </div>
               </Popup>
-              <AutoOpenPopup markerRef={tempMarkerRef} />
             </Marker>
           )}
         </MapContainer>
@@ -350,14 +365,25 @@ export default function MapPage() {
           </div>
           <div>
             <label>{t('point.category')}</label>
-            <select
-              value={formData.category}
-              onChange={(e) => setFormData((prev) => ({ ...prev, category: e.target.value }))}
-            >
+            <div className="checkbox-group">
               {Object.keys(CATEGORY_COLORS).map((cat) => (
-                <option key={cat} value={cat}>{t(`category.${cat}`)}</option>
+                <label key={cat}>
+                  <input
+                    type="checkbox"
+                    checked={formData.categories.includes(cat)}
+                    onChange={() =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        categories: prev.categories.includes(cat)
+                          ? prev.categories.filter((c) => c !== cat)
+                          : [...prev.categories, cat],
+                      }))
+                    }
+                  />
+                  {t(`category.${cat}`)}
+                </label>
               ))}
-            </select>
+            </div>
           </div>
           <div>
             <p>{t('point.addAcceptance')}</p>
