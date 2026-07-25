@@ -253,18 +253,6 @@ export default function MapPage() {
 
         <div className="search-box">
           <NominatimSearch query={searchQuery} setQuery={setSearchQuery} onSelectResult={setSearchResults} skipNextSearch={skipSearchRef} />
-          {searchResults.length > 0 && (
-            <div className="search-results-overlay" ref={searchOverlayRef}>
-              <ul>
-                {searchResults.map((item, idx) => (
-                  <li key={item.osm_id ?? idx} onClick={() => handleSearchSelect(item)}>
-                    <span className="result-name">{item.display_name.split(',')[0]}</span>
-                    <span className="result-full">{item.display_name}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
         </div>
 
         <div className="category-pills-wrapper">
@@ -299,18 +287,19 @@ export default function MapPage() {
       {mobileSearchOpen && (
         <div className="mobile-search-bar">
           <NominatimSearch query={searchQuery} setQuery={setSearchQuery} onSelectResult={setSearchResults} skipNextSearch={skipSearchRef} />
-          {searchResults.length > 0 && (
-            <div className="search-results-overlay" ref={searchOverlayRef}>
-              <ul>
-                {searchResults.map((item, idx) => (
-                  <li key={item.osm_id ?? idx} onClick={() => handleSearchSelect(item)}>
-                    <span className="result-name">{item.display_name.split(',')[0]}</span>
-                    <span className="result-full">{item.display_name}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
+        </div>
+      )}
+
+      {searchResults.length > 0 && (
+        <div className="mobile-results-overlay" ref={searchOverlayRef}>
+          <ul>
+            {searchResults.map((item, idx) => (
+              <li key={item.osm_id ?? idx} onClick={() => handleSearchSelect(item)}>
+                <span className="result-name">{item.display_name.split(',')[0]}</span>
+                <span className="result-full">{item.display_name}</span>
+              </li>
+            ))}
+          </ul>
         </div>
       )}
 
