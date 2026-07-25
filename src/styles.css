@@ -116,7 +116,14 @@ nav button:hover{background:#f5f5f5}
 .btn-delete{background:#f8d7da;color:#721c24;border:none;padding:.35rem .75rem;border-radius:6px;font-size:.8rem;font-weight:600;cursor:pointer}
 .btn-delete:hover{background:#f5c6cb}
 
-@media(max-width:600px){.search-results-overlay{position:fixed;top:auto;left:0;right:0;bottom:0;max-height:50vh;border-radius:8px 8px 0 0;z-index:99999}}
+.search-toggle{display:none;background:none;border:1px solid #ddd;border-radius:8px;padding:.35rem .4rem;cursor:pointer;color:#555;flex-shrink:0;align-items:center}
+.search-toggle:hover{background:#f5f5f5}
+@media(max-width:600px){
+  .search-toggle{display:inline-flex}
+  .search-box{display:none}
+  .search-box.mobile-active{display:block;position:absolute;top:100%;left:0;right:0;max-width:100%;padding:.5rem .75rem;background:#fff;border-bottom:1px solid #e0e0e0;z-index:100}
+  .search-box.mobile-active .search-results-overlay{position:absolute;top:100%;left:0;right:0;z-index:99999}
+}
 .btn-suggest{display:inline-flex;align-items:center;gap:.35rem}
 .btn-logout{display:inline-flex;align-items:center;justify-content:center;padding:.35rem!important;width:34px;height:34px;border-radius:50%!important;border:1px solid transparent!important}
 .btn-logout:hover{background:#f5f5f5!important;border-color:#ddd!important}

@@ -130,6 +130,7 @@ export default function MapPage() {
   const [searchResults, setSearchResults] = useState([]);
   const [flyTarget, setFlyTarget] = useState(null);
   const [tempMarker, setTempMarker] = useState(null);
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const searchOverlayRef = useRef(null);
   const tempMarkerRef = useRef(null);
   const skipSearchRef = useRef(false);
@@ -245,7 +246,10 @@ export default function MapPage() {
   return (
     <div className="map-page">
       <div className="toolbar">
-        <div className="search-box">
+        <button className="search-toggle" onClick={() => { setMobileSearchOpen((o) => !o); if (mobileSearchOpen) setSearchResults([]); }}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0016 9.5 6.5 6.5 0 109.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+        </button>
+        <div className={`search-box${mobileSearchOpen ? ' mobile-active' : ''}`}>
           <NominatimSearch query={searchQuery} setQuery={setSearchQuery} onSelectResult={setSearchResults} skipNextSearch={skipSearchRef} />
           {searchResults.length > 0 && (
             <div className="search-results-overlay" ref={searchOverlayRef}>
