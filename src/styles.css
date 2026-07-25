@@ -121,6 +121,7 @@ nav button:hover{background:#f5f5f5}
 .search-toggle:hover{background:#f5f5f5}
 @media(max-width:600px){
   .search-toggle{display:inline-flex}
+  .search-box{display:none}
 }
 
 .mobile-search-bar{width:100%;padding:.5rem .75rem;background:#fff;border-bottom:1px solid #e0e0e0;position:relative;flex-shrink:0;z-index:100}

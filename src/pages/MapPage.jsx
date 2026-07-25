@@ -89,10 +89,11 @@ function NominatimSearch({ query, setQuery, onSelectResult, skipNextSearch }) {
     }
     try {
       const res = await fetch(
-        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=5&countrycodes=es`
+        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=5&countrycodes=es`,
+        { headers: { 'User-Agent': 'MealCardCheck/1.0' } }
       );
       const data = await res.json();
-      onSelectResult(data);
+      onSelectResult(Array.isArray(data) ? data : []);
     } catch {
       onSelectResult([]);
     }
@@ -262,25 +263,25 @@ export default function MapPage() {
           <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0016 9.5 6.5 6.5 0 109.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
         </button>
 
-        {isDesktop ? (
-          <div className="search-box">
-            <NominatimSearch query={searchQuery} setQuery={setSearchQuery} onSelectResult={setSearchResults} skipNextSearch={skipSearchRef} />
-            {searchResults.length > 0 && (
-              <div className="search-results-overlay" ref={searchOverlayRef}>
-                <ul>
-                  {searchResults.map((item, idx) => (
-                    <li key={item.osm_id ?? idx} onClick={() => handleSearchSelect(item)}>
-                      <span className="result-name">{item.display_name.split(',')[0]}</span>
-                      <span className="result-full">{item.display_name}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-          </div>
-        ) : (
-          <div className="search-box" />
-        )}
+        <div className="search-box">
+          {isDesktop && (
+            <>
+              <NominatimSearch query={searchQuery} setQuery={setSearchQuery} onSelectResult={setSearchResults} skipNextSearch={skipSearchRef} />
+              {searchResults.length > 0 && (
+                <div className="search-results-overlay" ref={searchOverlayRef}>
+                  <ul>
+                    {searchResults.map((item, idx) => (
+                      <li key={item.osm_id ?? idx} onClick={() => handleSearchSelect(item)}>
+                        <span className="result-name">{item.display_name.split(',')[0]}</span>
+                        <span className="result-full">{item.display_name}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </>
+          )}
+        </div>
 
         <div className="category-pills-wrapper">
           <div className="category-pills">
