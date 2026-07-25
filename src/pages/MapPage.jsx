@@ -87,7 +87,6 @@ export default function MapPage() {
   const [locations, setLocations] = useState([]);
   const [categoryFilter, setCategoryFilter] = useState([]);
   const [cardTypeFilter, setCardTypeFilter] = useState('');
-  const [worksFilter, setWorksFilter] = useState('');
   const [showNonWorking, setShowNonWorking] = useState(false);
   const [selectedPosition, setSelectedPosition] = useState(null);
   const [formData, setFormData] = useState({ name: '', address: '', category: 'RESTAURANT', acceptances: [] });
@@ -115,13 +114,12 @@ export default function MapPage() {
     try {
       const params = {};
       if (cardTypeFilter) params.card_type = cardTypeFilter;
-      if (worksFilter) params.works = worksFilter;
       const { data } = await api.get('/locations', { params });
       setLocations(Array.isArray(data) ? data : []);
     } catch {
       setLocations([]);
     }
-  }, [cardTypeFilter, worksFilter]);
+  }, [cardTypeFilter]);
 
   useEffect(() => {
     fetchLocations();
@@ -222,11 +220,6 @@ export default function MapPage() {
           <option value="PAYFLOW">Payflow</option>
           <option value="FLEXOH">Flexoh</option>
         </select>
-        <select value={worksFilter} onChange={(e) => setWorksFilter(e.target.value)}>
-          <option value="">{t('map.filterAll')}</option>
-          <option value="true">{t('map.filterYes')}</option>
-          <option value="false">{t('map.filterNo')}</option>
-        </select>
         <label>
           <input type="checkbox" checked={showNonWorking} onChange={(e) => setShowNonWorking(e.target.checked)} />
           {t('map.showNonWorking')}
@@ -249,19 +242,23 @@ export default function MapPage() {
               icon={createIcon(CATEGORY_COLORS[loc.serviceCategory] || CATEGORY_COLORS.OTHER)}
             >
               <Popup>
-                <div>
-                  <strong>{loc.name}</strong>
-                  <p>{loc.address}</p>
-                  <p>{t(`category.${loc.serviceCategory}`)}</p>
-                  <div>
+                <div className="popup-card">
+                  <div className="popup-header" style={{ borderLeftColor: CATEGORY_COLORS[loc.serviceCategory] || CATEGORY_COLORS.OTHER }}>
+                    <strong>{loc.name}</strong>
+                  </div>
+                  <p className="popup-dir">{loc.address}</p>
+                  <span className="popup-cat" style={{ background: CATEGORY_COLORS[loc.serviceCategory] || CATEGORY_COLORS.OTHER }}>
+                    {t(`category.${loc.serviceCategory}`)}
+                  </span>
+                  <div className="popup-cards">
                     {loc.acceptances && loc.acceptances.length > 0 ? (
                       loc.acceptances.map((acc) => (
-                        <p key={acc.id}>
-                          {acc.cardType}: {acc.works ? t('point.works') : t('point.doesNotWork')}
-                        </p>
+                        <span key={acc.id} className={`card-badge ${acc.cardType === 'PAYFLOW' ? 'payflow' : 'flexoh'} ${acc.works ? 'works' : 'fails'}`}>
+                          {acc.cardType} {acc.works ? '✓' : '✗'}
+                        </span>
                       ))
                     ) : (
-                      <p>{t('point.noCards')}</p>
+                      <span className="card-badge no-data">{t('point.noCards')}</span>
                     )}
                   </div>
                 </div>
