@@ -135,7 +135,7 @@ export default function MapPage() {
   const skipSearchRef = useRef(false);
 
   useEffect(() => {
-    api.get('/card-types').then(({ data }) => setCardTypes(data)).catch(() => {});
+    api.get('/card-types').then(({ data }) => { if (Array.isArray(data)) setCardTypes(data); }).catch(() => {});
   }, []);
 
   useEffect(() => {
