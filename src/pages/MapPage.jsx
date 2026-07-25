@@ -42,12 +42,18 @@ function LocationMarker({ onLocationSelect }) {
   return null;
 }
 
-function MapFlyTo({ target }) {
+function MapFlyTo({ target, onArrived }) {
   const map = useMap();
+  const onArrivedRef = useRef(onArrived);
+  onArrivedRef.current = onArrived;
 
   useEffect(() => {
     if (target) {
       map.flyTo([target.lat, target.lng], 17, { duration: 1.2 });
+      const timer = setTimeout(() => {
+        if (onArrivedRef.current) onArrivedRef.current();
+      }, 1300);
+      return () => clearTimeout(timer);
     }
   }, [map, target]);
   return null;
@@ -116,6 +122,7 @@ export default function MapPage() {
   const [flyTarget, setFlyTarget] = useState(null);
   const [tempMarker, setTempMarker] = useState(null);
   const searchOverlayRef = useRef(null);
+  const tempMarkerRef = useRef(null);
   const skipSearchRef = useRef(false);
 
   useEffect(() => {
@@ -262,7 +269,11 @@ export default function MapPage() {
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
           <LocationMarker onLocationSelect={handleMapClick} />
-          <MapFlyTo target={flyTarget} />
+          <MapFlyTo target={flyTarget} onArrived={() => {
+            if (tempMarkerRef.current) {
+              tempMarkerRef.current.openPopup();
+            }
+          }} />
           {filteredLocations.map((loc) => {
             const cats = loc.categories || [];
             const firstCat = cats[0] || 'OTHER';
@@ -303,6 +314,7 @@ export default function MapPage() {
           })}
           {tempMarker && (
             <Marker
+              ref={tempMarkerRef}
               key={`temp-${tempMarker.lat}-${tempMarker.lng}`}
               position={[tempMarker.lat, tempMarker.lng]}
               icon={getIcon('RESTAURANT')}
