@@ -26,6 +26,16 @@ function createIcon(color) {
   });
 }
 
+function createHighlightIcon() {
+  return L.divIcon({
+    className: 'custom-marker highlight',
+    html: `<svg width="40" height="56" viewBox="0 0 40 56" fill="#e74c3c" xmlns="http://www.w3.org/2000/svg"><path d="M20 0C9 0 0 9 0 20c0 15 17.9 34.6 18.8 35.7.5.5 1.2.8 1.9.8h-1.4c.7 0 1.4-.3 1.9-.8C22.1 54.6 40 35 40 20 40 9 31 0 20 0zm0 28c-4.4 0-8-3.6-8-8s3.6-8 8-8 8 3.6 8 8-3.6 8-8 8z"/></svg>`,
+    iconSize: [40, 56],
+    iconAnchor: [20, 56],
+    popupAnchor: [0, -56],
+  });
+}
+
 function LocationMarker({ onLocationSelect }) {
   useMapEvents({
     click(e) {
@@ -35,13 +45,23 @@ function LocationMarker({ onLocationSelect }) {
   return null;
 }
 
-function MapFlyTo({ target }) {
+function MapFlyTo({ target, onArrived }) {
   const map = useMap();
   useEffect(() => {
     if (target) {
       map.flyTo([target.lat, target.lng], 17, { duration: 1.2 });
+      if (onArrived) setTimeout(() => onArrived(), 1300);
     }
-  }, [map, target]);
+  }, [map, target, onArrived]);
+  return null;
+}
+
+function AutoOpenPopup({ markerRef }) {
+  useEffect(() => {
+    if (markerRef.current) {
+      markerRef.current.openPopup();
+    }
+  }, [markerRef.current]);
   return null;
 }
 
@@ -81,6 +101,15 @@ function NominatimSearch({ query, setQuery, results, onSelectResult }) {
   );
 }
 
+function sortAcceptances(accs) {
+  if (!accs) return [];
+  return [...accs].sort((a, b) => {
+    if (a.works && !b.works) return -1;
+    if (!a.works && b.works) return 1;
+    return 0;
+  });
+}
+
 export default function MapPage() {
   const { t } = useTranslation();
   const { user } = useAuth();
@@ -90,11 +119,12 @@ export default function MapPage() {
   const [showNonWorking, setShowNonWorking] = useState(false);
   const [selectedPosition, setSelectedPosition] = useState(null);
   const [formData, setFormData] = useState({ name: '', address: '', category: 'RESTAURANT', acceptances: [] });
-  const [searchResult, setSearchResult] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [flyTarget, setFlyTarget] = useState(null);
+  const [tempMarker, setTempMarker] = useState(null);
   const searchOverlayRef = useRef(null);
+  const tempMarkerRef = useRef(null);
 
   useEffect(() => {
     if (searchResults.length === 0) return;
@@ -112,29 +142,29 @@ export default function MapPage() {
 
   const fetchLocations = useCallback(async () => {
     try {
-      const params = {};
-      if (cardTypeFilter) params.card_type = cardTypeFilter;
-      const { data } = await api.get('/locations', { params });
+      const { data } = await api.get('/locations');
       setLocations(Array.isArray(data) ? data : []);
     } catch {
       setLocations([]);
     }
-  }, [cardTypeFilter]);
+  }, []);
 
   useEffect(() => {
     fetchLocations();
   }, [fetchLocations]);
 
   const handleNominatimSelect = (result) => {
-    setSearchResult(result);
-    setSelectedPosition({ lat: parseFloat(result.lat), lng: parseFloat(result.lon) });
+    const lat = parseFloat(result.lat);
+    const lng = parseFloat(result.lon);
+    setSelectedPosition({ lat, lng });
     setFormData((prev) => ({ ...prev, address: result.display_name }));
-    setFlyTarget({ lat: parseFloat(result.lat), lng: parseFloat(result.lon) });
+    setFlyTarget({ lat, lng });
     setSearchResults([]);
+    setSearchQuery(result.display_name);
+    setTempMarker({ lat, lng, name: result.display_name.split(',')[0] });
   };
 
   const handleSearchSelect = (item) => {
-    setSearchQuery(item.display_name);
     handleNominatimSelect(item);
   };
 
@@ -146,6 +176,7 @@ export default function MapPage() {
 
   const handleMapClick = (latlng) => {
     setSelectedPosition(latlng);
+    setTempMarker(null);
   };
 
   const handleAddPoint = async (e) => {
@@ -168,7 +199,7 @@ export default function MapPage() {
       }
       setSelectedPosition(null);
       setFormData({ name: '', address: '', category: 'RESTAURANT', acceptances: [] });
-      setSearchResult(null);
+      setTempMarker(null);
       fetchLocations();
     } catch {
       // handle error
@@ -187,7 +218,10 @@ export default function MapPage() {
 
   const filteredLocations = (Array.isArray(locations) ? locations : []).filter((loc) => {
     if (categoryFilter.length > 0 && !categoryFilter.includes(loc.serviceCategory)) return false;
-    if (!showNonWorking) {
+    if (cardTypeFilter) {
+      const hasWorking = loc.acceptances?.some((a) => a.cardType === cardTypeFilter && a.works);
+      if (!hasWorking) return false;
+    } else if (!showNonWorking) {
       const hasWorking = loc.acceptances?.some((a) => a.works);
       if (!hasWorking) return false;
     }
@@ -228,7 +262,7 @@ export default function MapPage() {
       </div>
 
       <div className="map-wrap">
-        <MapContainer center={[41.3874, 2.1686]} zoom={12} style={{ height: '100%', width: '100%' }}>
+        <MapContainer center={[41.9844, 2.8244]} zoom={13} style={{ height: '100%', width: '100%' }}>
           <TileLayer
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -252,7 +286,7 @@ export default function MapPage() {
                   </span>
                   <div className="popup-cards">
                     {loc.acceptances && loc.acceptances.length > 0 ? (
-                      loc.acceptances.map((acc) => (
+                      sortAcceptances(loc.acceptances).map((acc) => (
                         <span key={acc.id} className={`card-badge ${acc.cardType === 'PAYFLOW' ? 'payflow' : 'flexoh'} ${acc.works ? 'works' : 'fails'}`}>
                           {acc.cardType} {acc.works ? '✓' : '✗'}
                         </span>
@@ -265,6 +299,19 @@ export default function MapPage() {
               </Popup>
             </Marker>
           ))}
+          {tempMarker && (
+            <Marker ref={tempMarkerRef} position={[tempMarker.lat, tempMarker.lng]} icon={createHighlightIcon()}>
+              <Popup autoPan={false}>
+                <div className="popup-card">
+                  <div className="popup-header" style={{ borderLeftColor: '#e74c3c' }}>
+                    <strong>{tempMarker.name}</strong>
+                  </div>
+                  <p className="popup-dir">{t('point.searchResult')}</p>
+                </div>
+              </Popup>
+              <AutoOpenPopup markerRef={tempMarkerRef} />
+            </Marker>
+          )}
         </MapContainer>
         {searchResults.length > 0 && (
           <div className="search-results-overlay" ref={searchOverlayRef}>
@@ -325,7 +372,7 @@ export default function MapPage() {
           </div>
           <div className="form-actions">
             <button type="submit" className="btn-save">{t('common.save')}</button>
-            <button type="button" className="btn-cancel" onClick={() => setSelectedPosition(null)}>{t('common.cancel')}</button>
+            <button type="button" className="btn-cancel" onClick={() => { setSelectedPosition(null); setTempMarker(null); }}>{t('common.cancel')}</button>
           </div>
         </form>
       )}
