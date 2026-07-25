@@ -74,5 +74,9 @@
   "common.delete": "Eliminar",
   "common.send": "Enviar",
   "common.sending": "Enviant...",
-  "common.error": "Error"
+  "common.error": "Error",
+  "common.search": "Cercar",
+  "common.previous": "Anterior",
+  "common.next": "Següent",
+  "admin.searchPlaceholder": "Cerca per paraula clau..."
 }
