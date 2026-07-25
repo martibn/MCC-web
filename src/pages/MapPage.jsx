@@ -26,17 +26,6 @@ function createIcon(color) {
   });
 }
 
-function createHighlightIcon() {
-  return L.divIcon({
-    className: 'custom-marker highlight',
-    html: `<svg width="40" height="56" viewBox="0 0 40 56" fill="#e74c3c" xmlns="http://www.w3.org/2000/svg"><path d="M20 0C9 0 0 9 0 20c0 15 17.9 34.6 18.8 35.7.5.5 1.2.8 1.9.8h-1.4c.7 0 1.4-.3 1.9-.8C22.1 54.6 40 35 40 20 40 9 31 0 20 0zm0 28c-4.4 0-8-3.6-8-8s3.6-8 8-8 8 3.6 8 8-3.6 8-8 8z"/></svg>`,
-    iconSize: [40, 56],
-    iconAnchor: [20, 56],
-    popupAnchor: [0, -56],
-  });
-}
-
-const HIGHLIGHT_ICON = createHighlightIcon();
 const ICON_CACHE = {};
 function getIcon(category) {
   const color = CATEGORY_COLORS[category] || CATEGORY_COLORS.OTHER;
@@ -313,10 +302,14 @@ export default function MapPage() {
             );
           })}
           {tempMarker && (
-            <Marker position={[tempMarker.lat, tempMarker.lng]} icon={HIGHLIGHT_ICON}>
-              <Popup autoPan={false}>
+            <Marker
+              key={`temp-${tempMarker.lat}-${tempMarker.lng}`}
+              position={[tempMarker.lat, tempMarker.lng]}
+              icon={getIcon('RESTAURANT')}
+            >
+              <Popup>
                 <div className="popup-card">
-                  <div className="popup-header" style={{ borderLeftColor: '#e74c3c' }}>
+                  <div className="popup-header" style={{ borderLeftColor: CATEGORY_COLORS.RESTAURANT }}>
                     <strong>{tempMarker.name}</strong>
                   </div>
                   <p className="popup-dir">{tempMarker.address}</p>
