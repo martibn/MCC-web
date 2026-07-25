@@ -317,7 +317,7 @@ export default function MapPage() {
           })}
           {tempMarker && (
             <Marker ref={tempMarkerRef} position={[tempMarker.lat, tempMarker.lng]} icon={createHighlightIcon()}>
-              <Popup>
+              <Popup autoPan={false}>
                 <div className="popup-card">
                   <div className="popup-header" style={{ borderLeftColor: '#e74c3c' }}>
                     <strong>{tempMarker.name}</strong>
