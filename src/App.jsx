@@ -98,7 +98,9 @@ export default function App() {
     <BrowserRouter>
       <AuthProvider>
         <Nav />
-        <AppRoutes />
+        <div className="page-container">
+          <AppRoutes />
+        </div>
       </AuthProvider>
     </BrowserRouter>
   );

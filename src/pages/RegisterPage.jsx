@@ -14,11 +14,14 @@ export default function RegisterPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
 
+  const pwValid = PW_PATTERN.test(password);
+  const showPwHint = password.length > 0 && !pwValid;
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
 
-    if (!PW_PATTERN.test(password)) {
+    if (!pwValid) {
       setError(t('auth.passwordRequirements'));
       return;
     }
@@ -47,6 +50,7 @@ export default function RegisterPage() {
         <div>
           <label>{t('auth.password')}</label>
           <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+          {showPwHint && <p className="pw-hint">{t('auth.passwordRequirements')}</p>}
         </div>
         <button type="submit">{t('auth.register')}</button>
       </form>

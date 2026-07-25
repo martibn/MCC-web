@@ -14,6 +14,9 @@ export default function ProfilePage() {
   const [pwError, setPwError] = useState('');
   const [changingPw, setChangingPw] = useState(false);
 
+  const pwValid = PW_PATTERN.test(pwNew);
+  const showPwHint = pwNew.length > 0 && !pwValid;
+
   useEffect(() => {
     api.get('/users/me')
       .then(({ data }) => setProfile(data))
@@ -26,7 +29,7 @@ export default function ProfilePage() {
     setPwMsg('');
     setPwError('');
 
-    if (!PW_PATTERN.test(pwNew)) {
+    if (!pwValid) {
       setPwError(t('auth.passwordRequirements'));
       return;
     }
@@ -74,6 +77,7 @@ export default function ProfilePage() {
           <h3>{t('profile.changePassword')}</h3>
           <input type="password" placeholder={t('profile.currentPassword')} value={pwCurrent} onChange={(e) => setPwCurrent(e.target.value)} required />
           <input type="password" placeholder={t('profile.newPassword')} value={pwNew} onChange={(e) => setPwNew(e.target.value)} required />
+          {showPwHint && <p className="pw-hint">{t('auth.passwordRequirements')}</p>}
           {pwMsg && <p className="success">{pwMsg}</p>}
           {pwError && <p className="error">{pwError}</p>}
           <button type="submit" disabled={changingPw}>{changingPw ? t('common.sending') : t('profile.updatePassword')}</button>
