@@ -1,15 +1,4 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-
-const DESKTOP_BP = 601;
-function useDesktop() {
-  const [desktop, setDesktop] = useState(window.innerWidth >= DESKTOP_BP);
-  useEffect(() => {
-    const handler = () => setDesktop(window.innerWidth >= DESKTOP_BP);
-    window.addEventListener('resize', handler);
-    return () => window.removeEventListener('resize', handler);
-  }, []);
-  return desktop;
-}
 import { useTranslation } from 'react-i18next';
 import { MapContainer, TileLayer, Marker, Popup, useMapEvents, useMap } from 'react-leaflet';
 import L from 'leaflet';
@@ -83,18 +72,18 @@ function NominatimSearch({ query, setQuery, onSelectResult, skipNextSearch }) {
   const timer = useRef(null);
 
   const search = useCallback(async (q) => {
-    if (q.length < 3) {
-      onSelectResult([]);
-      return;
-    }
+    console.log('NominatimSearch called:', q);
+    if (q.length < 3) { onSelectResult([]); return; }
     try {
       const res = await fetch(
         `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=5&countrycodes=es`,
         { headers: { 'User-Agent': 'MealCardCheck/1.0' } }
       );
       const data = await res.json();
+      console.log('NominatimSearch results:', Array.isArray(data) ? data.length : typeof data);
       onSelectResult(Array.isArray(data) ? data : []);
-    } catch {
+    } catch (err) {
+      console.error('NominatimSearch error:', err);
       onSelectResult([]);
     }
   }, [onSelectResult]);
@@ -131,7 +120,6 @@ function sortAcceptances(accs) {
 export default function MapPage() {
   const { t } = useTranslation();
   const { user } = useAuth();
-  const isDesktop = useDesktop();
   const [locations, setLocations] = useState([]);
   const [cardTypes, setCardTypes] = useState([]);
   const [categoryFilter, setCategoryFilter] = useState([]);
@@ -264,22 +252,18 @@ export default function MapPage() {
         </button>
 
         <div className="search-box">
-          {isDesktop && (
-            <>
-              <NominatimSearch query={searchQuery} setQuery={setSearchQuery} onSelectResult={setSearchResults} skipNextSearch={skipSearchRef} />
-              {searchResults.length > 0 && (
-                <div className="search-results-overlay" ref={searchOverlayRef}>
-                  <ul>
-                    {searchResults.map((item, idx) => (
-                      <li key={item.osm_id ?? idx} onClick={() => handleSearchSelect(item)}>
-                        <span className="result-name">{item.display_name.split(',')[0]}</span>
-                        <span className="result-full">{item.display_name}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-            </>
+          <NominatimSearch query={searchQuery} setQuery={setSearchQuery} onSelectResult={setSearchResults} skipNextSearch={skipSearchRef} />
+          {searchResults.length > 0 && (
+            <div className="search-results-overlay" ref={searchOverlayRef}>
+              <ul>
+                {searchResults.map((item, idx) => (
+                  <li key={item.osm_id ?? idx} onClick={() => handleSearchSelect(item)}>
+                    <span className="result-name">{item.display_name.split(',')[0]}</span>
+                    <span className="result-full">{item.display_name}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
           )}
         </div>
 
