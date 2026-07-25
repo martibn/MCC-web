@@ -1,4 +1,15 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+
+const DESKTOP_BP = 601;
+function useDesktop() {
+  const [desktop, setDesktop] = useState(window.innerWidth >= DESKTOP_BP);
+  useEffect(() => {
+    const handler = () => setDesktop(window.innerWidth >= DESKTOP_BP);
+    window.addEventListener('resize', handler);
+    return () => window.removeEventListener('resize', handler);
+  }, []);
+  return desktop;
+}
 import { useTranslation } from 'react-i18next';
 import { MapContainer, TileLayer, Marker, Popup, useMapEvents, useMap } from 'react-leaflet';
 import L from 'leaflet';
@@ -119,6 +130,7 @@ function sortAcceptances(accs) {
 export default function MapPage() {
   const { t } = useTranslation();
   const { user } = useAuth();
+  const isDesktop = useDesktop();
   const [locations, setLocations] = useState([]);
   const [cardTypes, setCardTypes] = useState([]);
   const [categoryFilter, setCategoryFilter] = useState([]);
@@ -250,21 +262,25 @@ export default function MapPage() {
           <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0016 9.5 6.5 6.5 0 109.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
         </button>
 
-        <div className="search-box">
-          <NominatimSearch query={searchQuery} setQuery={setSearchQuery} onSelectResult={setSearchResults} skipNextSearch={skipSearchRef} />
-          {searchResults.length > 0 && (
-            <div className="search-results-overlay" ref={searchOverlayRef}>
-              <ul>
-                {searchResults.map((item, idx) => (
-                  <li key={item.osm_id ?? idx} onClick={() => handleSearchSelect(item)}>
-                    <span className="result-name">{item.display_name.split(',')[0]}</span>
-                    <span className="result-full">{item.display_name}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-        </div>
+        {isDesktop ? (
+          <div className="search-box">
+            <NominatimSearch query={searchQuery} setQuery={setSearchQuery} onSelectResult={setSearchResults} skipNextSearch={skipSearchRef} />
+            {searchResults.length > 0 && (
+              <div className="search-results-overlay" ref={searchOverlayRef}>
+                <ul>
+                  {searchResults.map((item, idx) => (
+                    <li key={item.osm_id ?? idx} onClick={() => handleSearchSelect(item)}>
+                      <span className="result-name">{item.display_name.split(',')[0]}</span>
+                      <span className="result-full">{item.display_name}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="search-box" />
+        )}
 
         <div className="category-pills-wrapper">
           <div className="category-pills">
