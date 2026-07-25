@@ -36,6 +36,14 @@ function createHighlightIcon() {
   });
 }
 
+const HIGHLIGHT_ICON = createHighlightIcon();
+const ICON_CACHE = {};
+function getIcon(category) {
+  const color = CATEGORY_COLORS[category] || CATEGORY_COLORS.OTHER;
+  if (!ICON_CACHE[color]) ICON_CACHE[color] = createIcon(color);
+  return ICON_CACHE[color];
+}
+
 function LocationMarker({ onLocationSelect }) {
   useMapEvents({
     click(e) {
@@ -284,7 +292,7 @@ export default function MapPage() {
             <Marker
               key={loc.id}
               position={[loc.lat, loc.lng]}
-              icon={createIcon(CATEGORY_COLORS[firstCat] || CATEGORY_COLORS.OTHER)}
+              icon={getIcon(firstCat)}
             >
               <Popup>
                 <div className="popup-card">
@@ -316,7 +324,7 @@ export default function MapPage() {
             );
           })}
           {tempMarker && (
-            <Marker ref={tempMarkerRef} position={[tempMarker.lat, tempMarker.lng]} icon={createHighlightIcon()}>
+            <Marker ref={tempMarkerRef} position={[tempMarker.lat, tempMarker.lng]}               icon={HIGHLIGHT_ICON}>
               <Popup autoPan={false}>
                 <div className="popup-card">
                   <div className="popup-header" style={{ borderLeftColor: '#e74c3c' }}>
