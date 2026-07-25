@@ -1,20 +1,34 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import api from '../api/client';
 
 export default function SuggestionModal({ onClose }) {
   const { t } = useTranslation();
   const [message, setMessage] = useState('');
+  const [altchaPayload, setAltchaPayload] = useState('');
   const [error, setError] = useState('');
   const [sending, setSending] = useState(false);
   const altchaRef = useRef(null);
+
+  useEffect(() => {
+    const el = altchaRef.current;
+    if (!el) return;
+    const onVerified = (e) => setAltchaPayload(e.detail.payload || '');
+    const onStateChange = (e) => {
+      if (e.detail.state !== 'verified') setAltchaPayload('');
+    };
+    el.addEventListener('verified', onVerified);
+    el.addEventListener('statechange', onStateChange);
+    return () => {
+      el.removeEventListener('verified', onVerified);
+      el.removeEventListener('statechange', onStateChange);
+    };
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
 
-    const altchaEl = altchaRef.current;
-    const altchaPayload = altchaEl?.value;
     if (!altchaPayload) {
       setError(t('suggest.captchaRequired'));
       return;
@@ -23,7 +37,6 @@ export default function SuggestionModal({ onClose }) {
     setSending(true);
     try {
       await api.post('/suggestions', { message, altchaPayload });
-      if (altchaEl) altchaEl.value = '';
       setMessage('');
       onClose(true);
     } catch (err) {
