@@ -129,9 +129,9 @@ export default function MapPage() {
 
   const handleNominatimSelect = (result) => {
     setSearchResult(result);
-    setSelectedPosition({ lat: parseFloat(result.lat), lng: parseFloat(result.lng) });
+    setSelectedPosition({ lat: parseFloat(result.lat), lng: parseFloat(result.lon) });
     setFormData((prev) => ({ ...prev, address: result.display_name }));
-    setFlyTarget({ lat: parseFloat(result.lat), lng: parseFloat(result.lng) });
+    setFlyTarget({ lat: parseFloat(result.lat), lng: parseFloat(result.lon) });
     setSearchResults([]);
   };
 
