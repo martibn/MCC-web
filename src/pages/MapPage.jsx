@@ -59,9 +59,9 @@ function MapFlyTo({ target, onArrived }) {
 function AutoOpenPopup({ markerRef }) {
   useEffect(() => {
     if (markerRef.current) {
-      markerRef.current.openPopup();
+      setTimeout(() => markerRef.current.openPopup(), 100);
     }
-  }, [markerRef.current]);
+  }, []);
   return null;
 }
 
