@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, useMapEvents, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import api from '../api/client';
@@ -19,10 +19,10 @@ const CATEGORY_COLORS = {
 function createIcon(color) {
   return L.divIcon({
     className: 'custom-marker',
-    html: `<svg width="24" height="24" viewBox="0 0 24 24" fill="${color}" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="10"/></svg>`,
-    iconSize: [24, 24],
-    iconAnchor: [12, 12],
-    popupAnchor: [0, -12],
+    html: `<svg width="28" height="40" viewBox="0 0 28 40" fill="${color}" xmlns="http://www.w3.org/2000/svg"><path d="M14 0C6.3 0 0 6.3 0 14c0 10.5 12.5 24.2 13.2 25 .3.4.8.6 1.3.6h-.4c.5 0 1-.2 1.3-.6C15.5 38.2 28 24.5 28 14 28 6.3 21.7 0 14 0zm0 20c-3.3 0-6-2.7-6-6s2.7-6 6-6 6 2.7 6 6-2.7 6-6 6z"/></svg>`,
+    iconSize: [28, 40],
+    iconAnchor: [14, 40],
+    popupAnchor: [0, -40],
   });
 }
 
@@ -32,6 +32,16 @@ function LocationMarker({ onLocationSelect }) {
       onLocationSelect(e.latlng);
     },
   });
+  return null;
+}
+
+function MapFlyTo({ target }) {
+  const map = useMap();
+  useEffect(() => {
+    if (target) {
+      map.flyTo([target.lat, target.lng], 17, { duration: 1.2 });
+    }
+  }, [map, target]);
   return null;
 }
 
@@ -75,7 +85,7 @@ export default function MapPage() {
   const { t } = useTranslation();
   const { user } = useAuth();
   const [locations, setLocations] = useState([]);
-  const [categoryFilter, setCategoryFilter] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState([]);
   const [cardTypeFilter, setCardTypeFilter] = useState('');
   const [worksFilter, setWorksFilter] = useState('');
   const [showNonWorking, setShowNonWorking] = useState(false);
@@ -84,6 +94,7 @@ export default function MapPage() {
   const [searchResult, setSearchResult] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
+  const [flyTarget, setFlyTarget] = useState(null);
   const searchOverlayRef = useRef(null);
 
   useEffect(() => {
@@ -103,7 +114,6 @@ export default function MapPage() {
   const fetchLocations = useCallback(async () => {
     try {
       const params = {};
-      if (categoryFilter) params.category = categoryFilter;
       if (cardTypeFilter) params.card_type = cardTypeFilter;
       if (worksFilter) params.works = worksFilter;
       const { data } = await api.get('/locations', { params });
@@ -111,7 +121,7 @@ export default function MapPage() {
     } catch {
       setLocations([]);
     }
-  }, [categoryFilter, cardTypeFilter, worksFilter]);
+  }, [cardTypeFilter, worksFilter]);
 
   useEffect(() => {
     fetchLocations();
@@ -121,12 +131,19 @@ export default function MapPage() {
     setSearchResult(result);
     setSelectedPosition({ lat: parseFloat(result.lat), lng: parseFloat(result.lng) });
     setFormData((prev) => ({ ...prev, address: result.display_name }));
+    setFlyTarget({ lat: parseFloat(result.lat), lng: parseFloat(result.lng) });
     setSearchResults([]);
   };
 
   const handleSearchSelect = (item) => {
     setSearchQuery(item.display_name);
     handleNominatimSelect(item);
+  };
+
+  const toggleCategory = (cat) => {
+    setCategoryFilter((prev) =>
+      prev.includes(cat) ? prev.filter((c) => c !== cat) : [...prev, cat]
+    );
   };
 
   const handleMapClick = (latlng) => {
@@ -171,6 +188,7 @@ export default function MapPage() {
   };
 
   const filteredLocations = (Array.isArray(locations) ? locations : []).filter((loc) => {
+    if (categoryFilter.length > 0 && !categoryFilter.includes(loc.serviceCategory)) return false;
     if (!showNonWorking) {
       const hasWorking = loc.acceptances?.some((a) => a.works);
       if (!hasWorking) return false;
@@ -185,13 +203,20 @@ export default function MapPage() {
           <NominatimSearch query={searchQuery} setQuery={setSearchQuery} results={searchResults} onSelectResult={setSearchResults} />
         </div>
 
-        <div className="filters">
-        <select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)}>
-          <option value="">{t('map.filterAll')}</option>
+        <div className="category-pills">
           {Object.keys(CATEGORY_COLORS).map((cat) => (
-            <option key={cat} value={cat}>{t(`category.${cat}`)}</option>
+            <button
+              key={cat}
+              className={`category-pill ${categoryFilter.includes(cat) ? 'active' : ''}`}
+              style={{ '--cat-color': CATEGORY_COLORS[cat] }}
+              onClick={() => toggleCategory(cat)}
+            >
+              {t(`category.${cat}`)}
+            </button>
           ))}
-        </select>
+        </div>
+
+        <div className="filters">
         <select value={cardTypeFilter} onChange={(e) => setCardTypeFilter(e.target.value)}>
           <option value="">{t('map.filterAll')}</option>
           <option value="PAYFLOW">Payflow</option>
@@ -216,6 +241,7 @@ export default function MapPage() {
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
           <LocationMarker onLocationSelect={handleMapClick} />
+          <MapFlyTo target={flyTarget} />
           {filteredLocations.map((loc) => (
             <Marker
               key={loc.id}
