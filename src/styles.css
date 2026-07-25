@@ -47,6 +47,7 @@ nav button:hover{background:#f5f5f5}
 .result-name{display:block;font-weight:600;font-size:.85rem}
 .result-full{display:block;font-size:.7rem;color:#888;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
+.category-pills-wrapper{overflow:hidden;flex:1;min-width:0}
 .category-pills{display:flex;gap:.25rem;flex-wrap:nowrap;overflow-x:auto;padding:.25rem 0;-webkit-overflow-scrolling:touch;scrollbar-width:none}
 .category-pill{background:none;border:1px solid var(--cat-color,#ddd);padding:.2rem .5rem;border-radius:12px;font-size:.7rem;cursor:pointer;color:var(--cat-color,#555);transition:all .2s}
 .category-pill:hover{background:var(--cat-color);color:#fff;border-color:var(--cat-color)}
@@ -121,9 +122,16 @@ nav button:hover{background:#f5f5f5}
 @media(max-width:600px){
   .search-toggle{display:inline-flex}
   .search-box{display:none}
-  .search-box.mobile-active{display:block;position:absolute;top:100%;left:0;right:0;max-width:100%;padding:.5rem .75rem;background:#fff;border-bottom:1px solid #e0e0e0;z-index:100}
-  .search-box.mobile-active .search-results-overlay{position:absolute;top:100%;left:0;right:0;z-index:99999}
 }
+
+.mobile-search-bar{padding:.5rem .75rem;background:#fff;border-bottom:1px solid #e0e0e0;position:relative;flex-shrink:0;z-index:100}
+.mobile-search-bar input{width:100%;padding:.4rem .7rem;border:1px solid #d0d0d0;border-radius:8px;font-size:.85rem}
+.mobile-search-bar input:focus{outline:0;border-color:#e74c3c}
+.mobile-search-bar .search-results-overlay{position:absolute;top:100%;left:0;right:0;background:#fff;border:1px solid #ddd;border-radius:0 0 8px 8px;box-shadow:0 4px 12px rgba(0,0,0,.1);z-index:9999;max-height:200px;overflow-y:auto}
+.mobile-search-bar .search-results-overlay ul{list-style:none;padding:0;margin:0}
+.mobile-search-bar .search-results-overlay li{padding:.5rem .75rem;cursor:pointer;border-bottom:1px solid #f0f0f0}
+.mobile-search-bar .search-results-overlay li:hover{background:#f9f9f9}
+.mobile-search-bar .search-results-overlay li:last-child{border-bottom:none}
 .btn-suggest{display:inline-flex;align-items:center;gap:.35rem}
 .btn-logout{display:inline-flex;align-items:center;justify-content:center;padding:.35rem!important;width:34px;height:34px;border-radius:50%!important;border:1px solid transparent!important}
 .btn-logout:hover{background:#f5f5f5!important;border-color:#ddd!important}

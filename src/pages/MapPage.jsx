@@ -143,7 +143,7 @@ export default function MapPage() {
     if (searchResults.length === 0) return;
     const handleClick = (e) => {
       if (searchOverlayRef.current && !searchOverlayRef.current.contains(e.target)) {
-        const searchInput = document.querySelector('.search-box input');
+        const searchInput = document.querySelector('.search-box input, .mobile-search-bar input');
         if (searchInput && !searchInput.contains(e.target)) {
           setSearchResults([]);
         }
@@ -249,7 +249,8 @@ export default function MapPage() {
         <button className="search-toggle" onClick={() => { setMobileSearchOpen((o) => !o); if (mobileSearchOpen) setSearchResults([]); }}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0016 9.5 6.5 6.5 0 109.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
         </button>
-        <div className={`search-box${mobileSearchOpen ? ' mobile-active' : ''}`}>
+
+        <div className="search-box">
           <NominatimSearch query={searchQuery} setQuery={setSearchQuery} onSelectResult={setSearchResults} skipNextSearch={skipSearchRef} />
           {searchResults.length > 0 && (
             <div className="search-results-overlay" ref={searchOverlayRef}>
@@ -265,32 +266,52 @@ export default function MapPage() {
           )}
         </div>
 
-        <div className="category-pills">
-          {Object.keys(CATEGORY_COLORS).map((cat) => (
-            <button
-              key={cat}
-              className={`category-pill ${categoryFilter.includes(cat) ? 'active' : ''}`}
-              style={{ '--cat-color': CATEGORY_COLORS[cat] }}
-              onClick={() => toggleCategory(cat)}
-            >
-              {t(`category.${cat}`)}
-            </button>
-          ))}
+        <div className="category-pills-wrapper">
+          <div className="category-pills">
+            {Object.keys(CATEGORY_COLORS).map((cat) => (
+              <button
+                key={cat}
+                className={`category-pill ${categoryFilter.includes(cat) ? 'active' : ''}`}
+                style={{ '--cat-color': CATEGORY_COLORS[cat] }}
+                onClick={() => toggleCategory(cat)}
+              >
+                {t(`category.${cat}`)}
+              </button>
+            ))}
+          </div>
         </div>
 
         <div className="filters">
-        <select value={cardTypeFilter} onChange={(e) => setCardTypeFilter(e.target.value)}>
-          <option value="">{t('map.filterAll')}</option>
-          {cardTypes.map((ct) => (
-            <option key={ct.id} value={ct.name}>{ct.name}</option>
-          ))}
-        </select>
-        <label>
-          <input type="checkbox" checked={showNonWorking} onChange={(e) => setShowNonWorking(e.target.checked)} />
-          {t('map.showNonWorking')}
-        </label>
+          <select value={cardTypeFilter} onChange={(e) => setCardTypeFilter(e.target.value)}>
+            <option value="">{t('map.filterAll')}</option>
+            {cardTypes.map((ct) => (
+              <option key={ct.id} value={ct.name}>{ct.name}</option>
+            ))}
+          </select>
+          <label>
+            <input type="checkbox" checked={showNonWorking} onChange={(e) => setShowNonWorking(e.target.checked)} />
+            {t('map.showNonWorking')}
+          </label>
+        </div>
       </div>
-      </div>
+
+      {mobileSearchOpen && (
+        <div className="mobile-search-bar">
+          <NominatimSearch query={searchQuery} setQuery={setSearchQuery} onSelectResult={setSearchResults} skipNextSearch={skipSearchRef} />
+          {searchResults.length > 0 && (
+            <div className="search-results-overlay" ref={searchOverlayRef}>
+              <ul>
+                {searchResults.map((item, idx) => (
+                  <li key={item.osm_id ?? idx} onClick={() => handleSearchSelect(item)}>
+                    <span className="result-name">{item.display_name.split(',')[0]}</span>
+                    <span className="result-full">{item.display_name}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      )}
 
       <div className="map-wrap">
         <MapContainer center={[41.9844, 2.8244]} zoom={13} style={{ height: '100%', width: '100%' }}>
