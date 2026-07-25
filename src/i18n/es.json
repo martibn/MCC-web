@@ -17,6 +17,7 @@
   "auth.loginError": "Credenciales inválidas",
   "auth.registerError": "Error al registrarse",
   "auth.loginSuccess": "Sesión iniciada correctamente",
+  "auth.passwordRequirements": "Mínimo 8 caracteres, debe contener mayúscula, minúscula y número",
   "map.title": "Mapa",
   "map.loading": "Cargando mapa...",
   "map.addPointTitle": "Añadir un punto",

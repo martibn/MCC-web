@@ -17,6 +17,7 @@
   "auth.loginError": "Invalid credentials",
   "auth.registerError": "Registration failed",
   "auth.loginSuccess": "Logged in successfully",
+  "auth.passwordRequirements": "Minimum 8 characters, must include uppercase, lowercase, and a number",
   "map.title": "Map",
   "map.loading": "Loading map...",
   "map.addPointTitle": "Add a point",

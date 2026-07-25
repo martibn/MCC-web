@@ -3,6 +3,8 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 
+const PW_PATTERN = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
+
 export default function RegisterPage() {
   const { t } = useTranslation();
   const { register } = useAuth();
@@ -15,6 +17,12 @@ export default function RegisterPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+
+    if (!PW_PATTERN.test(password)) {
+      setError(t('auth.passwordRequirements'));
+      return;
+    }
+
     try {
       await register(email, password, name);
       navigate('/');

@@ -17,6 +17,7 @@
   "auth.loginError": "Credencials invàlides",
   "auth.registerError": "Error al registrar-se",
   "auth.loginSuccess": "Sessió iniciada correctament",
+  "auth.passwordRequirements": "Mínim 8 caràcters, ha de contenir majúscula, minúscula i número",
   "map.title": "Mapa",
   "map.loading": "Carregant mapa...",
   "map.addPointTitle": "Afegeix un punt",

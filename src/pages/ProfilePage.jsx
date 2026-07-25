@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import api from '../api/client';
 
+const PW_PATTERN = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
+
 export default function ProfilePage() {
   const { t } = useTranslation();
   const [profile, setProfile] = useState(null);
@@ -23,6 +25,12 @@ export default function ProfilePage() {
     e.preventDefault();
     setPwMsg('');
     setPwError('');
+
+    if (!PW_PATTERN.test(pwNew)) {
+      setPwError(t('auth.passwordRequirements'));
+      return;
+    }
+
     setChangingPw(true);
     try {
       await api.put('/users/me/password', { currentPassword: pwCurrent, newPassword: pwNew });
@@ -59,14 +67,13 @@ export default function ProfilePage() {
       <div className="profile-info">
         <p><strong>{t('auth.name')}:</strong> {profile.name}</p>
         <p><strong>{t('auth.email')}:</strong> {profile.email}</p>
-        <p><strong>{t('profile.role')}:</strong> {profile.role}</p>
       </div>
 
       {profile.role !== 'ADMIN' && (
         <form className="password-form" onSubmit={handleChangePassword}>
           <h3>{t('profile.changePassword')}</h3>
           <input type="password" placeholder={t('profile.currentPassword')} value={pwCurrent} onChange={(e) => setPwCurrent(e.target.value)} required />
-          <input type="password" placeholder={t('profile.newPassword')} value={pwNew} onChange={(e) => setPwNew(e.target.value)} required minLength={6} />
+          <input type="password" placeholder={t('profile.newPassword')} value={pwNew} onChange={(e) => setPwNew(e.target.value)} required />
           {pwMsg && <p className="success">{pwMsg}</p>}
           {pwError && <p className="error">{pwError}</p>}
           <button type="submit" disabled={changingPw}>{changingPw ? t('common.sending') : t('profile.updatePassword')}</button>
