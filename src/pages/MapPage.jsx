@@ -53,30 +53,20 @@ function LocationMarker({ onLocationSelect }) {
   return null;
 }
 
-function SearchFlyTo({ target, markerData }) {
+function MapFlyTo({ target, onArrived }) {
   const map = useMap();
+  const onArrivedRef = useRef(onArrived);
+  onArrivedRef.current = onArrived;
 
   useEffect(() => {
-    if (!target || !markerData) return;
-
-    map.flyTo([target.lat, target.lng], 17, { duration: 1.2 });
-
-    const marker = L.marker([markerData.lat, markerData.lng], { icon: HIGHLIGHT_ICON }).addTo(map);
-
-    const html = `<div class="popup-card">
-      <div class="popup-header" style="border-left-color:#e74c3c">
-        <strong>${markerData.name}</strong>
-      </div>
-      <p class="popup-dir">${markerData.address}</p>
-    </div>`;
-    marker.bindPopup(html, { className: '', closeButton: true, autoPan: false });
-
-    const onMoveEnd = () => marker.openPopup();
-    map.once('moveend', onMoveEnd);
-
-    return () => { map.removeLayer(marker); };
-  }, [map, target, markerData]);
-
+    if (target) {
+      map.flyTo([target.lat, target.lng], 17, { duration: 1.2 });
+      const timer = setTimeout(() => {
+        if (onArrivedRef.current) onArrivedRef.current();
+      }, 1300);
+      return () => clearTimeout(timer);
+    }
+  }, [map, target]);
   return null;
 }
 
@@ -143,6 +133,7 @@ export default function MapPage() {
   const [flyTarget, setFlyTarget] = useState(null);
   const [tempMarker, setTempMarker] = useState(null);
   const searchOverlayRef = useRef(null);
+  const tempMarkerRef = useRef(null);
   const skipSearchRef = useRef(false);
 
   useEffect(() => {
@@ -289,7 +280,11 @@ export default function MapPage() {
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
           <LocationMarker onLocationSelect={handleMapClick} />
-          <SearchFlyTo target={flyTarget} markerData={tempMarker} />
+          <MapFlyTo target={flyTarget} onArrived={() => {
+            if (tempMarkerRef.current) {
+              tempMarkerRef.current.openPopup();
+            }
+          }} />
           {filteredLocations.map((loc) => {
             const cats = loc.categories || [];
             const firstCat = cats[0] || 'OTHER';
@@ -328,6 +323,18 @@ export default function MapPage() {
             </Marker>
             );
           })}
+          {tempMarker && (
+            <Marker ref={tempMarkerRef} position={[tempMarker.lat, tempMarker.lng]} icon={HIGHLIGHT_ICON}>
+              <Popup autoPan={false}>
+                <div className="popup-card">
+                  <div className="popup-header" style={{ borderLeftColor: '#e74c3c' }}>
+                    <strong>{tempMarker.name}</strong>
+                  </div>
+                  <p className="popup-dir">{tempMarker.address}</p>
+                </div>
+              </Popup>
+            </Marker>
+          )}
         </MapContainer>
         {searchResults.length > 0 && (
           <div className="search-results-overlay" ref={searchOverlayRef}>
