@@ -8,12 +8,34 @@ import './styles.css';
 import './i18n';
 
 function Nav() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { user, logout } = useAuth();
+  const currentLanguage = i18n.language || 'ca';
+
   return (
     <nav>
       <Link to="/" className="logo">{t('app.title')}</Link>
       <div className="spacer" />
+      <div className="lang-selector">
+        <button 
+          className={currentLanguage.startsWith('ca') ? 'active' : ''} 
+          onClick={() => i18n.changeLanguage('ca')}
+        >
+          CA
+        </button>
+        <button 
+          className={currentLanguage.startsWith('es') ? 'active' : ''} 
+          onClick={() => i18n.changeLanguage('es')}
+        >
+          ES
+        </button>
+        <button 
+          className={currentLanguage.startsWith('en') ? 'active' : ''} 
+          onClick={() => i18n.changeLanguage('en')}
+        >
+          EN
+        </button>
+      </div>
       {user ? (
         <>
           <span>{user.name}</span>
