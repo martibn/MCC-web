@@ -72,8 +72,7 @@ export default function ProfilePage() {
         <p><strong>{t('auth.email')}:</strong> {profile.email}</p>
       </div>
 
-      {profile.role !== 'ADMIN' && (
-        <form className="password-form" onSubmit={handleChangePassword}>
+      <form className="password-form" onSubmit={handleChangePassword}>
           <h3>{t('profile.changePassword')}</h3>
           <input type="password" placeholder={t('profile.currentPassword')} value={pwCurrent} onChange={(e) => setPwCurrent(e.target.value)} required />
           <input type="password" placeholder={t('profile.newPassword')} value={pwNew} onChange={(e) => setPwNew(e.target.value)} required />
@@ -82,7 +81,6 @@ export default function ProfilePage() {
           {pwError && <p className="error">{pwError}</p>}
           <button type="submit" disabled={changingPw}>{changingPw ? t('common.sending') : t('profile.updatePassword')}</button>
         </form>
-      )}
 
       <h2 style={{ marginTop: '1.5rem', fontSize: '1.1rem' }}>{t('profile.myLocations')} ({locationsCount})</h2>
       {locationsCount > 0 ? (
