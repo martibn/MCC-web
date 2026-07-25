@@ -33,6 +33,14 @@ function getIcon(category) {
   return ICON_CACHE[color];
 }
 
+const SEARCH_ICON = L.divIcon({
+  className: 'custom-marker search-result',
+  html: `<svg width="28" height="40" viewBox="0 0 28 40" fill="#e74c3c" xmlns="http://www.w3.org/2000/svg"><path d="M14 0C6.3 0 0 6.3 0 14c0 10.5 12.5 24.2 13.2 25 .3.4.8.6 1.3.6h-.4c.5 0 1-.2 1.3-.6C15.5 38.2 28 24.5 28 14 28 6.3 21.7 0 14 0zm0 20c-3.3 0-6-2.7-6-6s2.7-6 6-6 6 2.7 6 6-2.7 6-6 6z"/></svg>`,
+  iconSize: [28, 40],
+  iconAnchor: [14, 40],
+  popupAnchor: [0, -40],
+});
+
 function LocationMarker({ onLocationSelect }) {
   useMapEvents({
     click(e) {
@@ -317,7 +325,7 @@ export default function MapPage() {
               ref={tempMarkerRef}
               key={`temp-${tempMarker.lat}-${tempMarker.lng}`}
               position={[tempMarker.lat, tempMarker.lng]}
-              icon={getIcon('RESTAURANT')}
+              icon={SEARCH_ICON}
             >
               <Popup>
                 <div className="popup-card">
