@@ -35,15 +35,13 @@ function LocationMarker({ onLocationSelect }) {
   return null;
 }
 
-function NominatimSearch({ onSelect }) {
+function NominatimSearch({ query, setQuery, results, onSelectResult }) {
   const { t } = useTranslation();
-  const [query, setQuery] = useState('');
-  const [results, setResults] = useState([]);
   const timer = useRef(null);
 
   const search = useCallback(async (q) => {
     if (q.length < 3) {
-      setResults([]);
+      onSelectResult([]);
       return;
     }
     try {
@@ -51,11 +49,11 @@ function NominatimSearch({ onSelect }) {
         `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=5&countrycodes=es`
       );
       const data = await res.json();
-      setResults(data);
+      onSelectResult(data);
     } catch {
-      setResults([]);
+      onSelectResult([]);
     }
-  }, []);
+  }, [onSelectResult]);
 
   useEffect(() => {
     clearTimeout(timer.current);
@@ -63,30 +61,13 @@ function NominatimSearch({ onSelect }) {
     return () => clearTimeout(timer.current);
   }, [query, search]);
 
-  const handleSelect = (item) => {
-    setQuery(item.display_name);
-    setResults([]);
-    onSelect({ lat: parseFloat(item.lat), lng: parseFloat(item.lon), address: item.display_name });
-  };
-
   return (
-    <div>
-      <input
-        type="text"
-        placeholder={t('map.search')}
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-      />
-      {results.length > 0 && (
-        <ul>
-          {results.map((item) => (
-            <li key={item.osm_id} onClick={() => handleSelect(item)}>
-              {item.display_name}
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
+    <input
+      type="text"
+      placeholder={t('map.search')}
+      value={query}
+      onChange={(e) => setQuery(e.target.value)}
+    />
   );
 }
 
@@ -101,6 +82,23 @@ export default function MapPage() {
   const [selectedPosition, setSelectedPosition] = useState(null);
   const [formData, setFormData] = useState({ name: '', address: '', category: 'RESTAURANT', acceptances: [] });
   const [searchResult, setSearchResult] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const searchOverlayRef = useRef(null);
+
+  useEffect(() => {
+    if (searchResults.length === 0) return;
+    const handleClick = (e) => {
+      if (searchOverlayRef.current && !searchOverlayRef.current.contains(e.target)) {
+        const searchInput = document.querySelector('.search-box input');
+        if (searchInput && !searchInput.contains(e.target)) {
+          setSearchResults([]);
+        }
+      }
+    };
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [searchResults]);
 
   const fetchLocations = useCallback(async () => {
     try {
@@ -122,7 +120,13 @@ export default function MapPage() {
   const handleNominatimSelect = (result) => {
     setSearchResult(result);
     setSelectedPosition({ lat: parseFloat(result.lat), lng: parseFloat(result.lng) });
-    setFormData((prev) => ({ ...prev, address: result.address }));
+    setFormData((prev) => ({ ...prev, address: result.display_name }));
+    setSearchResults([]);
+  };
+
+  const handleSearchSelect = (item) => {
+    setSearchQuery(item.display_name);
+    handleNominatimSelect(item);
   };
 
   const handleMapClick = (latlng) => {
@@ -178,8 +182,8 @@ export default function MapPage() {
     <div className="map-page">
       <div className="toolbar">
         <div className="search-box">
-        <NominatimSearch onSelect={handleNominatimSelect} />
-      </div>
+          <NominatimSearch query={searchQuery} setQuery={setSearchQuery} results={searchResults} onSelectResult={setSearchResults} />
+        </div>
 
         <div className="filters">
         <select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)}>
@@ -206,39 +210,51 @@ export default function MapPage() {
       </div>
 
       <div className="map-wrap">
-      <MapContainer center={[41.3874, 2.1686]} zoom={12} style={{ height: '100%', width: '100%' }}>
-        <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        />
-        <LocationMarker onLocationSelect={handleMapClick} />
-        {filteredLocations.map((loc) => (
-          <Marker
-            key={loc.id}
-            position={[loc.lat, loc.lng]}
-            icon={createIcon(CATEGORY_COLORS[loc.serviceCategory] || CATEGORY_COLORS.OTHER)}
-          >
-            <Popup>
-              <div>
-                <strong>{loc.name}</strong>
-                <p>{loc.address}</p>
-                <p>{t(`category.${loc.serviceCategory}`)}</p>
+        <MapContainer center={[41.3874, 2.1686]} zoom={12} style={{ height: '100%', width: '100%' }}>
+          <TileLayer
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          />
+          <LocationMarker onLocationSelect={handleMapClick} />
+          {filteredLocations.map((loc) => (
+            <Marker
+              key={loc.id}
+              position={[loc.lat, loc.lng]}
+              icon={createIcon(CATEGORY_COLORS[loc.serviceCategory] || CATEGORY_COLORS.OTHER)}
+            >
+              <Popup>
                 <div>
-                  {loc.acceptances && loc.acceptances.length > 0 ? (
-                    loc.acceptances.map((acc) => (
-                      <p key={acc.id}>
-                        {acc.cardType}: {acc.works ? t('point.works') : t('point.doesNotWork')}
-                      </p>
-                    ))
-                  ) : (
-                    <p>{t('point.noCards')}</p>
-                  )}
+                  <strong>{loc.name}</strong>
+                  <p>{loc.address}</p>
+                  <p>{t(`category.${loc.serviceCategory}`)}</p>
+                  <div>
+                    {loc.acceptances && loc.acceptances.length > 0 ? (
+                      loc.acceptances.map((acc) => (
+                        <p key={acc.id}>
+                          {acc.cardType}: {acc.works ? t('point.works') : t('point.doesNotWork')}
+                        </p>
+                      ))
+                    ) : (
+                      <p>{t('point.noCards')}</p>
+                    )}
+                  </div>
                 </div>
-              </div>
-            </Popup>
-          </Marker>
-        ))}
-      </MapContainer>
+              </Popup>
+            </Marker>
+          ))}
+        </MapContainer>
+        {searchResults.length > 0 && (
+          <div className="search-results-overlay" ref={searchOverlayRef}>
+            <ul>
+              {searchResults.map((item, idx) => (
+                <li key={item.osm_id ?? idx} onClick={() => handleSearchSelect(item)}>
+                  <span className="result-name">{item.display_name.split(',')[0]}</span>
+                  <span className="result-full">{item.display_name}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
       </div>
 
       {selectedPosition && user && (
